@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { type ColumnDef } from '@tanstack/react-table'
 import DataTable from '@/components/Tables/DataTable'
 import ConfirmModal from '@/components/Modals/ConfirmModal'
-import { FormField, FormSelect } from '@/components/Forms/FormField'
+import { FormField } from '@/components/Forms/FormField'
 import { productsApi, categoriesApi } from '@/services/api'
 import { formatCurrency, getStockBadgeClass, getStockStatusLabel, generateSKU } from '@/utils/formatters'
 import { useSettingsStore } from '@/store/settingsStore'
@@ -32,6 +32,31 @@ interface Category {
 }
 
 // =====================
+// Image resize utility (runs in renderer, no IPC needed)
+// =====================
+function resizeImage(file: File, maxSize = 400, quality = 0.82): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = reject
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onerror = reject
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1)
+        canvas.width = Math.round(img.width * ratio)
+        canvas.height = Math.round(img.height * ratio)
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.src = e.target!.result as string
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+// =====================
 // PRODUCT MODAL
 // =====================
 
@@ -44,7 +69,8 @@ const ProductModal: React.FC<{
   const [error, setError] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
   const [imagePreview, setImagePreview] = useState<string>(product?.image || '')
-  const [isPickingImage, setIsPickingImage] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const {
     register, handleSubmit, formState: { errors },
@@ -73,13 +99,20 @@ const ProductModal: React.FC<{
     })
   }, [])
 
-  const handlePickImage = async () => {
-    setIsPickingImage(true)
-    const res = await productsApi.pickImage()
-    if (res.success && res.data) {
-      setImagePreview(res.data.path)
+  // Handle file selected via the hidden input
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsResizing(true)
+    try {
+      const base64 = await resizeImage(file)
+      setImagePreview(base64)
+    } catch {
+      setError('Failed to process image. Please try another file.')
     }
-    setIsPickingImage(false)
+    setIsResizing(false)
+    // Reset input so same file can be selected again
+    e.target.value = ''
   }
 
   const onSubmit = async (data: ProductFormData) => {
@@ -89,7 +122,7 @@ const ProductModal: React.FC<{
       ...data,
       category: data.category || undefined,
       barcode: data.barcode || undefined,
-      image: imagePreview || undefined
+      image: imagePreview || undefined    // base64 data URL or empty
     }
     const response = product
       ? await productsApi.update(product.id, payload)
@@ -111,6 +144,15 @@ const ProductModal: React.FC<{
           <button onClick={onClose} className="btn-ghost w-8 h-8 p-0 flex items-center justify-center">✕</button>
         </div>
 
+        {/* Hidden file input — triggered programmatically */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
         <form onSubmit={handleSubmit(onSubmit)} id="product-form">
           <div className="p-6">
             <div className="flex gap-5">
@@ -118,39 +160,47 @@ const ProductModal: React.FC<{
               <div className="flex-shrink-0">
                 <label className="label mb-2">Product Image</label>
                 <div
-                  onClick={handlePickImage}
+                  onClick={() => fileInputRef.current?.click()}
                   className={`
                     w-32 h-32 rounded-xl border-2 border-dashed flex flex-col items-center justify-center
-                    cursor-pointer transition-all group overflow-hidden relative
-                    ${imagePreview ? 'border-primary' : 'border-border hover:border-primary hover:bg-primary-light/30'}
+                    cursor-pointer transition-all group overflow-hidden relative select-none
+                    ${imagePreview
+                      ? 'border-primary'
+                      : 'border-border hover:border-primary hover:bg-blue-50'
+                    }
                   `}
                 >
-                  {imagePreview ? (
+                  {isResizing ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs text-text-muted">Processing...</span>
+                    </div>
+                  ) : imagePreview ? (
                     <>
                       <img
-                        src={`local-file://${imagePreview}`}
-                        alt="Product"
+                        src={imagePreview}
+                        alt="Product preview"
                         className="w-full h-full object-cover"
-                        onError={() => setImagePreview('')}
                       />
-                      {/* Replace overlay */}
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-white text-xs font-medium">Change</span>
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                        <span className="text-white text-xs font-semibold">Change Photo</span>
                       </div>
                     </>
                   ) : (
                     <>
                       <ImageIcon className="w-8 h-8 text-text-muted mb-2 group-hover:text-primary transition-colors" />
-                      <span className="text-xs text-text-muted group-hover:text-primary transition-colors">
-                        {isPickingImage ? 'Selecting...' : 'Click to upload'}
+                      <span className="text-xs text-text-muted group-hover:text-primary transition-colors text-center px-2">
+                        Click to upload
                       </span>
+                      <span className="text-[10px] text-text-muted mt-0.5">JPG, PNG, WebP</span>
                     </>
                   )}
                 </div>
-                {imagePreview && (
+                {imagePreview && !isResizing && (
                   <button
                     type="button"
-                    onClick={() => setImagePreview('')}
+                    onClick={(e) => { e.stopPropagation(); setImagePreview('') }}
                     className="mt-1.5 text-xs text-danger hover:underline flex items-center gap-1"
                   >
                     <X className="w-3 h-3" /> Remove
@@ -200,7 +250,6 @@ const ProductModal: React.FC<{
 
             {/* Category + Prices row */}
             <div className="grid grid-cols-3 gap-4 mt-4">
-              {/* Category — linked to categories list */}
               <div>
                 <label htmlFor="category" className="label">
                   Category
@@ -208,7 +257,7 @@ const ProductModal: React.FC<{
                     href="#"
                     onClick={(e) => { e.preventDefault(); onClose() }}
                     className="ml-2 text-primary text-xs font-normal hover:underline"
-                    title="Manage categories"
+                    title="Go to Categories page to manage"
                   >
                     Manage →
                   </a>
@@ -224,8 +273,9 @@ const ProductModal: React.FC<{
                   <input
                     id="category"
                     className="input"
-                    placeholder="Add categories first..."
-                    {...register('category')}
+                    placeholder="No categories yet..."
+                    readOnly
+                    title="Add categories first from the Categories page"
                   />
                 )}
               </div>
@@ -278,7 +328,7 @@ const ProductModal: React.FC<{
           {/* Footer */}
           <div className="flex justify-end gap-3 px-6 pb-6 border-t border-border pt-4">
             <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>Cancel</button>
-            <button type="submit" id="product-save" className="btn btn-primary" disabled={isLoading}>
+            <button type="submit" id="product-save" className="btn btn-primary" disabled={isLoading || isResizing}>
               {isLoading ? 'Saving...' : product ? 'Update Product' : 'Add Product'}
             </button>
           </div>
@@ -357,7 +407,7 @@ const ProductsPage: React.FC = () => {
           <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-border">
             {row.original.image ? (
               <img
-                src={`local-file://${row.original.image}`}
+                src={row.original.image}
                 alt={row.original.productName}
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
