@@ -13,7 +13,8 @@ import {
   ShoppingBag,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Tag
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { usePermissions } from '@/hooks/usePermissions'
@@ -29,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, module: 'dashboard' },
   { label: 'POS', path: '/pos', icon: ShoppingCart, module: 'pos' },
   { label: 'Products', path: '/products', icon: Package, module: 'products' },
+  { label: 'Categories', path: '/categories', icon: Tag, module: 'products' },
   { label: 'Inventory', path: '/inventory', icon: Warehouse, module: 'inventory' },
   { label: 'Customers', path: '/customers', icon: Users, module: 'customers' },
   { label: 'Sales', path: '/sales', icon: Receipt, module: 'sales' },

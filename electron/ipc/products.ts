@@ -302,4 +302,111 @@ export function registerProductHandlers(ipcMain: IpcMain): void {
       return { success: false, error: 'Failed to export CSV' }
     }
   })
+  // ==================== PICK PRODUCT IMAGE ====================
+  ipcMain.handle('products:pickImage', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: 'Select Product Image',
+        filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }],
+        properties: ['openFile']
+      })
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: false, error: 'No image selected' }
+      }
+
+      const srcPath = result.filePaths[0]
+      const ext = srcPath.split('.').pop() || 'jpg'
+      const filename = `product-${Date.now()}.${ext}`
+      const imagesDir = join(app.getPath('userData'), 'product-images')
+
+      if (!fs.existsSync(imagesDir)) {
+        fs.mkdirSync(imagesDir, { recursive: true })
+      }
+
+      const destPath = join(imagesDir, filename)
+      fs.copyFileSync(srcPath, destPath)
+
+      return { success: true, data: { path: destPath, filename } }
+    } catch (error) {
+      console.error('[IPC:products:pickImage] Error:', error)
+      return { success: false, error: 'Failed to pick image' }
+    }
+  })
+
+  // ==================== GET ALL CATEGORIES ====================
+  ipcMain.handle('categories:getAll', async () => {
+    try {
+      const categories = await (prisma as any).$queryRaw`
+        SELECT id, name, description, color, createdAt FROM "Category" ORDER BY name ASC
+      `
+      return { success: true, data: categories }
+    } catch (error) {
+      console.error('[IPC:categories:getAll] Error:', error)
+      return { success: false, error: 'Failed to fetch categories' }
+    }
+  })
+
+  // ==================== CREATE CATEGORY ====================
+  ipcMain.handle('categories:create', async (_event, data: { name: string; description?: string; color?: string }) => {
+    try {
+      // Check duplicate
+      const existing = await (prisma as any).$queryRaw`
+        SELECT id FROM "Category" WHERE name = ${data.name} LIMIT 1
+      ` as any[]
+      if (existing.length > 0) {
+        return { success: false, error: 'Category already exists' }
+      }
+
+      await (prisma as any).$executeRaw`
+        INSERT INTO "Category" (name, description, color, createdAt)
+        VALUES (${data.name}, ${data.description || null}, ${data.color || '#27AAE1'}, datetime('now'))
+      `
+      const created = await (prisma as any).$queryRaw`
+        SELECT id, name, description, color, createdAt FROM "Category" WHERE name = ${data.name} LIMIT 1
+      `
+      return { success: true, data: (created as any[])[0] }
+    } catch (error) {
+      console.error('[IPC:categories:create] Error:', error)
+      return { success: false, error: 'Failed to create category' }
+    }
+  })
+
+  // ==================== UPDATE CATEGORY ====================
+  ipcMain.handle('categories:update', async (_event, id: number, data: { name?: string; description?: string; color?: string }) => {
+    try {
+      if (data.name) {
+        await (prisma as any).$executeRaw`
+          UPDATE "Category" SET name = ${data.name}, description = ${data.description || null}, color = ${data.color || '#27AAE1'}
+          WHERE id = ${id}
+        `
+      }
+      const updated = await (prisma as any).$queryRaw`
+        SELECT id, name, description, color, createdAt FROM "Category" WHERE id = ${id} LIMIT 1
+      `
+      return { success: true, data: (updated as any[])[0] }
+    } catch (error) {
+      console.error('[IPC:categories:update] Error:', error)
+      return { success: false, error: 'Failed to update category' }
+    }
+  })
+
+  // ==================== DELETE CATEGORY ====================
+  ipcMain.handle('categories:delete', async (_event, id: number) => {
+    try {
+      // Unlink products from this category first
+      const cat = await (prisma as any).$queryRaw`SELECT name FROM "Category" WHERE id = ${id} LIMIT 1` as any[]
+      if (cat.length > 0) {
+        await prisma.product.updateMany({
+          where: { category: cat[0].name },
+          data: { category: null }
+        })
+      }
+      await (prisma as any).$executeRaw`DELETE FROM "Category" WHERE id = ${id}`
+      return { success: true }
+    } catch (error) {
+      console.error('[IPC:categories:delete] Error:', error)
+      return { success: false, error: 'Failed to delete category' }
+    }
+  })
 }

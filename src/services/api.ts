@@ -44,6 +44,7 @@ declare global {
         importCSV: () => Promise<IpcResponse<{ imported: number; failed: number; errors: string[] }>>
         exportCSV: () => Promise<IpcResponse<{ path: string; count: number }>>
         getCategories: () => Promise<IpcResponse<string[]>>
+        pickImage: () => Promise<IpcResponse<{ path: string; filename: string }>>
       }
       sales: {
         create: (data: unknown) => Promise<IpcResponse<Sale>>
@@ -86,6 +87,12 @@ declare global {
         restoreBackup: (filename: string) => Promise<IpcResponse>
         getAppVersion: () => Promise<IpcResponse<string>>
       }
+      categories: {
+        getAll: () => Promise<IpcResponse<Array<{ id: number; name: string; description: string | null; color: string; createdAt: string }>>>
+        create: (data: unknown) => Promise<IpcResponse<{ id: number; name: string; description: string | null; color: string }>>
+        update: (id: number, data: unknown) => Promise<IpcResponse<{ id: number; name: string; description: string | null; color: string }>>
+        delete: (id: number) => Promise<IpcResponse>
+      }
     }
   }
 }
@@ -115,7 +122,8 @@ export const productsApi = {
   getLowStock: () => window.api.products.getLowStock(),
   importCSV: () => window.api.products.importCSV(),
   exportCSV: () => window.api.products.exportCSV(),
-  getCategories: () => window.api.products.getCategories()
+  getCategories: () => window.api.products.getCategories(),
+  pickImage: () => window.api.products.pickImage()
 }
 
 // ==================== SALES API ====================
@@ -168,4 +176,12 @@ export const settingsApi = {
   listBackups: () => window.api.settings.listBackups(),
   restoreBackup: (filename: string) => window.api.settings.restoreBackup(filename),
   getAppVersion: () => window.api.settings.getAppVersion()
+}
+
+// ==================== CATEGORIES API ====================
+export const categoriesApi = {
+  getAll: () => window.api.categories.getAll(),
+  create: (data: unknown) => window.api.categories.create(data),
+  update: (id: number, data: unknown) => window.api.categories.update(id, data),
+  delete: (id: number) => window.api.categories.delete(id)
 }

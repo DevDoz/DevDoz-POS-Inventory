@@ -37,7 +37,8 @@ contextBridge.exposeInMainWorld('api', {
     getLowStock: () => invoke('products:getLowStock'),
     importCSV: () => invoke('products:importCSV'),
     exportCSV: () => invoke('products:exportCSV'),
-    getCategories: () => invoke('products:getCategories')
+    getCategories: () => invoke('products:getCategories'),
+    pickImage: () => invoke('products:pickImage')
   },
 
   // ==================== SALES ====================
@@ -89,5 +90,13 @@ contextBridge.exposeInMainWorld('api', {
     listBackups: () => invoke('settings:listBackups'),
     restoreBackup: (filename: string) => invoke('settings:restoreBackup', filename),
     getAppVersion: () => invoke('settings:getAppVersion')
+  },
+
+  // ==================== CATEGORIES ====================
+  categories: {
+    getAll: () => invoke('categories:getAll'),
+    create: (data: unknown) => invoke('categories:create', data),
+    update: (id: number, data: unknown) => invoke('categories:update', id, data),
+    delete: (id: number) => invoke('categories:delete', id)
   }
 })

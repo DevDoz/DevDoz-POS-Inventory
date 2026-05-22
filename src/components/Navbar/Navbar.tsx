@@ -8,6 +8,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/pos': 'Point of Sale',
   '/products': 'Products',
+  '/categories': 'Categories',
   '/inventory': 'Inventory',
   '/customers': 'Customers',
   '/sales': 'Sales History',

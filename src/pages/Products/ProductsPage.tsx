@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, Upload, Download, Edit2, Trash2, AlertTriangle } from 'lucide-react'
+import { Plus, Search, Upload, Download, Edit2, Trash2, AlertTriangle, ImageIcon, X } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,14 +7,10 @@ import { type ColumnDef } from '@tanstack/react-table'
 import DataTable from '@/components/Tables/DataTable'
 import ConfirmModal from '@/components/Modals/ConfirmModal'
 import { FormField, FormSelect } from '@/components/Forms/FormField'
-import { productsApi } from '@/services/api'
+import { productsApi, categoriesApi } from '@/services/api'
 import { formatCurrency, getStockBadgeClass, getStockStatusLabel, generateSKU } from '@/utils/formatters'
 import { useSettingsStore } from '@/store/settingsStore'
 import type { Product } from '@/types'
-
-// =====================
-// PRODUCT FORM SCHEMA
-// =====================
 
 const productSchema = z.object({
   productName: z.string().min(1, 'Product name is required'),
@@ -29,6 +25,12 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>
 
+interface Category {
+  id: number
+  name: string
+  color: string
+}
+
 // =====================
 // PRODUCT MODAL
 // =====================
@@ -40,9 +42,14 @@ const ProductModal: React.FC<{
 }> = ({ product, onClose, onSave }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [categories, setCategories] = useState<string[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [imagePreview, setImagePreview] = useState<string>(product?.image || '')
+  const [isPickingImage, setIsPickingImage] = useState(false)
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProductFormData>({
+  const {
+    register, handleSubmit, formState: { errors },
+    setValue, watch
+  } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: product
       ? {
@@ -61,30 +68,36 @@ const ProductModal: React.FC<{
   const productName = watch('productName')
 
   useEffect(() => {
-    productsApi.getCategories().then((res) => {
-      if (res.success && res.data) setCategories(res.data as string[])
+    categoriesApi.getAll().then((res) => {
+      if (res.success && res.data) setCategories(res.data)
     })
   }, [])
+
+  const handlePickImage = async () => {
+    setIsPickingImage(true)
+    const res = await productsApi.pickImage()
+    if (res.success && res.data) {
+      setImagePreview(res.data.path)
+    }
+    setIsPickingImage(false)
+  }
 
   const onSubmit = async (data: ProductFormData) => {
     setIsLoading(true)
     setError('')
-    try {
-      const response = product
-        ? await productsApi.update(product.id, data)
-        : await productsApi.create(data)
-
-      if (response.success) {
-        onSave()
-        onClose()
-      } else {
-        setError(response.error || 'Failed to save product')
-      }
-    } catch {
-      setError('An unexpected error occurred')
-    } finally {
-      setIsLoading(false)
+    const payload = {
+      ...data,
+      category: data.category || undefined,
+      barcode: data.barcode || undefined,
+      image: imagePreview || undefined
     }
+    const response = product
+      ? await productsApi.update(product.id, payload)
+      : await productsApi.create(payload)
+
+    if (response.success) { onSave(); onClose() }
+    else setError(response.error || 'Failed to save product')
+    setIsLoading(false)
   }
 
   return (
@@ -95,113 +108,176 @@ const ProductModal: React.FC<{
           <h2 className="text-lg font-semibold text-text-primary">
             {product ? 'Edit Product' : 'Add New Product'}
           </h2>
-          <button onClick={onClose} className="btn-ghost w-8 h-8 p-0 flex items-center justify-center">
-            ✕
-          </button>
+          <button onClick={onClose} className="btn-ghost w-8 h-8 p-0 flex items-center justify-center">✕</button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} id="product-form">
-          <div className="p-6 grid grid-cols-2 gap-4">
-            <FormField
-              id="productName"
-              label="Product Name"
-              placeholder="Enter product name"
-              registration={register('productName')}
-              error={errors.productName}
-              required
-              className="col-span-2"
-            />
-            <FormField
-              id="sku"
-              label="SKU"
-              placeholder="e.g., PROD-001"
-              registration={register('sku')}
-              error={errors.sku}
-              required
-              hint={!product ? "Auto-generate based on name" : undefined}
-            />
-            <FormField
-              id="barcode"
-              label="Barcode"
-              placeholder="Scan or enter barcode"
-              registration={register('barcode')}
-              error={errors.barcode}
-            />
-            <div>
-              <label className="label">Category</label>
-              <input
-                id="category"
-                list="category-options"
-                className="input"
-                placeholder="e.g., Electronics, Food..."
-                {...register('category')}
-              />
-              <datalist id="category-options">
-                {categories.map((c) => <option key={c} value={c || ''} />)}
-              </datalist>
+          <div className="p-6">
+            <div className="flex gap-5">
+              {/* LEFT: Image Upload */}
+              <div className="flex-shrink-0">
+                <label className="label mb-2">Product Image</label>
+                <div
+                  onClick={handlePickImage}
+                  className={`
+                    w-32 h-32 rounded-xl border-2 border-dashed flex flex-col items-center justify-center
+                    cursor-pointer transition-all group overflow-hidden relative
+                    ${imagePreview ? 'border-primary' : 'border-border hover:border-primary hover:bg-primary-light/30'}
+                  `}
+                >
+                  {imagePreview ? (
+                    <>
+                      <img
+                        src={`file://${imagePreview}`}
+                        alt="Product"
+                        className="w-full h-full object-cover"
+                        onError={() => setImagePreview('')}
+                      />
+                      {/* Replace overlay */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-white text-xs font-medium">Change</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-8 h-8 text-text-muted mb-2 group-hover:text-primary transition-colors" />
+                      <span className="text-xs text-text-muted group-hover:text-primary transition-colors">
+                        {isPickingImage ? 'Selecting...' : 'Click to upload'}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {imagePreview && (
+                  <button
+                    type="button"
+                    onClick={() => setImagePreview('')}
+                    className="mt-1.5 text-xs text-danger hover:underline flex items-center gap-1"
+                  >
+                    <X className="w-3 h-3" /> Remove
+                  </button>
+                )}
+              </div>
+
+              {/* RIGHT: Form Fields */}
+              <div className="flex-1 grid grid-cols-2 gap-4">
+                <FormField
+                  id="productName"
+                  label="Product Name"
+                  placeholder="Enter product name"
+                  registration={register('productName')}
+                  error={errors.productName}
+                  required
+                  className="col-span-2"
+                />
+                <div>
+                  <label className="label">SKU *</label>
+                  <input
+                    id="sku"
+                    className={`input ${errors.sku ? 'input-error' : ''}`}
+                    placeholder="e.g. PROD-001"
+                    {...register('sku')}
+                  />
+                  {errors.sku && <p className="error-text">{errors.sku.message}</p>}
+                  {!product && productName && (
+                    <button
+                      type="button"
+                      onClick={() => setValue('sku', generateSKU(productName))}
+                      className="text-[11px] text-primary hover:underline mt-0.5"
+                    >
+                      Auto-generate
+                    </button>
+                  )}
+                </div>
+                <FormField
+                  id="barcode"
+                  label="Barcode"
+                  placeholder="Scan or type..."
+                  registration={register('barcode')}
+                  error={errors.barcode}
+                />
+              </div>
             </div>
-            <FormField
-              id="purchasePrice"
-              label="Purchase Price"
-              type="number"
-              placeholder="0.00"
-              registration={register('purchasePrice')}
-              error={errors.purchasePrice}
-              required
-            />
-            <FormField
-              id="sellingPrice"
-              label="Selling Price"
-              type="number"
-              placeholder="0.00"
-              registration={register('sellingPrice')}
-              error={errors.sellingPrice}
-              required
-            />
-            <FormField
-              id="quantity"
-              label="Quantity in Stock"
-              type="number"
-              placeholder="0"
-              registration={register('quantity')}
-              error={errors.quantity}
-            />
-            <FormField
-              id="lowStockLimit"
-              label="Low Stock Alert At"
-              type="number"
-              placeholder="10"
-              registration={register('lowStockLimit')}
-              error={errors.lowStockLimit}
-              hint="Alert when stock drops to this number"
-            />
+
+            {/* Category + Prices row */}
+            <div className="grid grid-cols-3 gap-4 mt-4">
+              {/* Category — linked to categories list */}
+              <div>
+                <label htmlFor="category" className="label">
+                  Category
+                  <a
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); onClose() }}
+                    className="ml-2 text-primary text-xs font-normal hover:underline"
+                    title="Manage categories"
+                  >
+                    Manage →
+                  </a>
+                </label>
+                {categories.length > 0 ? (
+                  <select id="category" className="input" {...register('category')}>
+                    <option value="">No category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    id="category"
+                    className="input"
+                    placeholder="Add categories first..."
+                    {...register('category')}
+                  />
+                )}
+              </div>
+              <FormField
+                id="purchasePrice"
+                label="Purchase Price"
+                type="number"
+                placeholder="0.00"
+                registration={register('purchasePrice')}
+                error={errors.purchasePrice}
+                required
+              />
+              <FormField
+                id="sellingPrice"
+                label="Selling Price"
+                type="number"
+                placeholder="0.00"
+                registration={register('sellingPrice')}
+                error={errors.sellingPrice}
+                required
+              />
+            </div>
+
+            {/* Stock */}
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <FormField
+                id="quantity"
+                label="Quantity in Stock"
+                type="number"
+                placeholder="0"
+                registration={register('quantity')}
+                error={errors.quantity}
+              />
+              <FormField
+                id="lowStockLimit"
+                label="Low Stock Alert At"
+                type="number"
+                placeholder="10"
+                registration={register('lowStockLimit')}
+                error={errors.lowStockLimit}
+                hint="Alert when qty drops to this"
+              />
+            </div>
           </div>
 
           {error && (
-            <div className="mx-6 mb-4 p-3 bg-danger-light text-danger rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Generate SKU helper */}
-          {!product && productName && (
-            <div className="mx-6 mb-4">
-              <button
-                type="button"
-                onClick={() => setValue('sku', generateSKU(productName))}
-                className="text-xs text-primary hover:underline"
-              >
-                Auto-generate SKU from name
-              </button>
-            </div>
+            <div className="mx-6 mb-4 p-3 bg-danger-light text-danger rounded-lg text-sm">{error}</div>
           )}
 
           {/* Footer */}
           <div className="flex justify-end gap-3 px-6 pb-6 border-t border-border pt-4">
-            <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>
-              Cancel
-            </button>
+            <button type="button" onClick={onClose} className="btn btn-secondary" disabled={isLoading}>Cancel</button>
             <button type="submit" id="product-save" className="btn btn-primary" disabled={isLoading}>
               {isLoading ? 'Saving...' : product ? 'Update Product' : 'Add Product'}
             </button>
@@ -224,10 +300,17 @@ const ProductsPage: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [filterCategory, setFilterCategory] = useState('')
+  const [categories, setCategories] = useState<Category[]>([])
   const { getSetting } = useSettingsStore()
   const currencySymbol = getSetting('currency_symbol') || '$'
 
-  useEffect(() => { loadProducts() }, [])
+  useEffect(() => {
+    loadProducts()
+    categoriesApi.getAll().then((res) => {
+      if (res.success && res.data) setCategories(res.data)
+    })
+  }, [])
 
   const loadProducts = async () => {
     setIsLoading(true)
@@ -235,6 +318,11 @@ const ProductsPage: React.FC = () => {
     if (response.success && response.data) setProducts(response.data)
     setIsLoading(false)
   }
+
+  // Filtered products by category
+  const filteredProducts = filterCategory
+    ? products.filter((p) => p.category === filterCategory)
+    : products
 
   const handleDelete = async () => {
     if (!deletingId) return
@@ -256,43 +344,64 @@ const ProductsPage: React.FC = () => {
 
   const handleExportCSV = async () => {
     const response = await productsApi.exportCSV()
-    if (response.success) {
-      alert(`Exported successfully!`)
-    }
+    if (response.success) alert('Exported successfully!')
   }
 
   const columns: ColumnDef<Product, unknown>[] = [
     {
       accessorKey: 'productName',
-      header: 'Product Name',
+      header: 'Product',
       cell: ({ row }) => (
-        <div>
-          <div className="font-medium text-text-primary">{row.original.productName}</div>
-          <div className="text-xs text-text-muted">{row.original.sku}</div>
+        <div className="flex items-center gap-3">
+          {/* Image thumbnail */}
+          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-border">
+            {row.original.image ? (
+              <img
+                src={`file://${row.original.image}`}
+                alt={row.original.productName}
+                className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            ) : (
+              <ImageIcon className="w-4 h-4 text-text-muted" />
+            )}
+          </div>
+          <div>
+            <div className="font-medium text-text-primary">{row.original.productName}</div>
+            <div className="text-xs text-text-muted">{row.original.sku}</div>
+          </div>
         </div>
       )
     },
     {
       accessorKey: 'category',
       header: 'Category',
-      cell: ({ getValue }) => {
-        const val = getValue() as string | null
-        return val ? <span className="badge badge-info">{val}</span> : <span className="text-text-muted text-xs">—</span>
+      cell: ({ row }) => {
+        const catName = row.original.category
+        const cat = categories.find((c) => c.name === catName)
+        return catName ? (
+          <span
+            className="px-2.5 py-0.5 rounded-full text-white text-xs font-semibold"
+            style={{ backgroundColor: cat?.color || '#27AAE1' }}
+          >
+            {catName}
+          </span>
+        ) : (
+          <span className="text-text-muted text-xs">—</span>
+        )
       }
     },
     {
       accessorKey: 'sellingPrice',
       header: 'Price',
-      cell: ({ getValue }) => (
-        <span className="font-medium">{formatCurrency(getValue() as number, currencySymbol)}</span>
-      )
+      cell: ({ getValue }) => <span className="font-medium">{formatCurrency(getValue() as number, currencySymbol)}</span>
     },
     {
       accessorKey: 'quantity',
       header: 'Stock',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <span>{row.original.quantity}</span>
+          <span className="font-medium">{row.original.quantity}</span>
           <span className={`badge ${getStockBadgeClass(row.original.quantity, row.original.lowStockLimit)}`}>
             {row.original.quantity <= row.original.lowStockLimit && row.original.quantity > 0 && (
               <AlertTriangle className="w-3 h-3 mr-1" />
@@ -312,8 +421,7 @@ const ProductsPage: React.FC = () => {
             onClick={() => { setEditingProduct(row.original); setShowModal(true) }}
             className="btn btn-secondary btn-sm"
           >
-            <Edit2 className="w-3.5 h-3.5" />
-            Edit
+            <Edit2 className="w-3.5 h-3.5" /> Edit
           </button>
           <button
             id={`delete-product-${row.original.id}`}
@@ -333,7 +441,7 @@ const ProductsPage: React.FC = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Products</h1>
-          <p className="text-text-secondary text-sm">{products.length} products</p>
+          <p className="text-text-secondary text-sm">{filteredProducts.length} of {products.length} products</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={handleImportCSV} className="btn btn-secondary btn-sm">
@@ -352,29 +460,56 @@ const ProductsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-        <input
-          id="product-search"
-          type="text"
-          placeholder="Search products..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="input pl-10"
-        />
+      {/* Search + Category filter */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+          <input
+            id="product-search"
+            type="text"
+            placeholder="Search products..."
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="input pl-10 w-64"
+          />
+        </div>
+
+        {/* Category filter chips */}
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setFilterCategory('')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              filterCategory === ''
+                ? 'bg-primary text-white shadow-sm'
+                : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
+            }`}
+          >
+            All
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setFilterCategory(filterCategory === cat.name ? '' : cat.name)}
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+                filterCategory === cat.name ? 'text-white shadow-sm' : 'text-white opacity-60 hover:opacity-100'
+              }`}
+              style={{ backgroundColor: cat.color }}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
       <DataTable
-        data={products}
+        data={filteredProducts}
         columns={columns}
         isLoading={isLoading}
         globalFilter={globalFilter}
-        emptyMessage="No products found. Add your first product to get started."
+        emptyMessage="No products found."
       />
 
-      {/* Product Modal */}
       {showModal && (
         <ProductModal
           product={editingProduct}
@@ -383,7 +518,6 @@ const ProductsPage: React.FC = () => {
         />
       )}
 
-      {/* Confirm Delete */}
       <ConfirmModal
         isOpen={!!deletingId}
         title="Delete Product"

@@ -193,21 +193,36 @@ const POSPage: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Product Image */}
+                  <div className="w-full h-20 rounded-lg mb-2 overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {product.image ? (
+                      <img
+                        src={`file://${product.image}`}
+                        alt={product.productName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-2xl font-bold text-gray-300">${product.productName.charAt(0)}</span>` }}
+                      />
+                    ) : (
+                      <span className="text-2xl font-bold text-gray-300">
+                        {product.productName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
                   {/* Category badge */}
                   {product.category && (
-                    <span className="badge badge-info text-[10px] mb-2">{product.category}</span>
+                    <span className="badge badge-info text-[10px] mb-1">{product.category}</span>
                   )}
 
-                  <div className="font-medium text-text-primary text-sm leading-tight line-clamp-2 mb-2">
+                  <div className="font-medium text-text-primary text-sm leading-tight line-clamp-2 mb-1">
                     {product.productName}
                   </div>
-                  <div className="text-xs text-text-muted mb-1">SKU: {product.sku}</div>
-                  <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center justify-between mt-1.5">
                     <span className="text-primary font-bold text-sm">
                       {formatCurrency(product.sellingPrice, currencySymbol)}
                     </span>
                     <span className={`text-xs font-medium ${product.quantity <= product.lowStockLimit ? 'text-warning' : 'text-text-muted'}`}>
-                      Qty: {product.quantity}
+                      {product.quantity}
                     </span>
                   </div>
 

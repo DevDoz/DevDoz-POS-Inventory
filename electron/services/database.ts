@@ -183,6 +183,16 @@ async function runMigrations(prisma: PrismaClient): Promise<void> {
     )
   `)
 
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "Category" (
+      "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+      "name" TEXT NOT NULL UNIQUE,
+      "description" TEXT,
+      "color" TEXT DEFAULT '#27AAE1',
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
   console.log('[Database] Migrations complete')
 }
 

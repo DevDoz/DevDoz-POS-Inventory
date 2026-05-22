@@ -17,6 +17,7 @@ import SalesPage from '@/pages/Sales/SalesPage'
 import ReportsPage from '@/pages/Reports/ReportsPage'
 import UsersPage from '@/pages/Users/UsersPage'
 import SettingsPage from '@/pages/Settings/SettingsPage'
+import CategoriesPage from '@/pages/Categories/CategoriesPage'
 
 /**
  * Root application component.
@@ -43,6 +44,7 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/pos" element={<POSPage />} />
           <Route path="/products" element={<ProductsPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/sales" element={<SalesPage />} />
