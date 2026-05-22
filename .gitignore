@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+.env
+*.db
+*.db-journal
+backups/
+database/
+prisma/migrations/
+generated/

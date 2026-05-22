@@ -1,0 +1,137 @@
+// DevDoz POS — Prisma Schema
+// SQLite database for fully offline operation
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../node_modules/.prisma/client"
+  // Target Electron's specific Node.js ABI
+  binaryTargets = ["native", "windows-x64", "darwin-x64", "darwin-arm64"]
+}
+
+datasource db {
+  provider = "sqlite"
+  // DB path is set dynamically at runtime via DATABASE_URL env var
+  url      = env("DATABASE_URL")
+}
+
+// =====================
+// USER / AUTH MODELS
+// =====================
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String?  @unique
+  password  String   // bcrypt hashed
+  role      Role     @default(CASHIER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sales[]
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  CASHIER
+}
+
+// =====================
+// PRODUCT MODEL
+// =====================
+
+model Product {
+  id            Int      @id @default(autoincrement())
+  productName   String
+  sku           String   @unique
+  barcode       String?  @unique
+  category      String?
+  purchasePrice Float    @default(0)
+  sellingPrice  Float    @default(0)
+  quantity      Int      @default(0)
+  lowStockLimit Int      @default(10)
+  image         String?  // File path or base64
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  saleItems     SaleItem[]
+  inventoryLogs InventoryLog[]
+}
+
+// =====================
+// CUSTOMER MODEL
+// =====================
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?  @unique
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sales[]
+}
+
+// =====================
+// SALE / INVOICE MODEL
+// =====================
+
+model Sales {
+  id            Int      @id @default(autoincrement())
+  invoiceNo     String   @unique
+  customerId    Int?
+  userId        Int
+  subtotal      Float    @default(0)
+  discount      Float    @default(0)
+  tax           Float    @default(0)
+  grandTotal    Float    @default(0)
+  paymentMethod String   @default("CASH")
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  customer Customer? @relation(fields: [customerId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
+  items    SaleItem[]
+}
+
+model SaleItem {
+  id        Int   @id @default(autoincrement())
+  saleId    Int
+  productId Int
+  quantity  Int
+  price     Float  // Unit price at time of sale
+  subtotal  Float  // quantity * price
+
+  sale    Sales   @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// =====================
+// INVENTORY LOG MODEL
+// =====================
+
+model InventoryLog {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  type      String   // "ADD" | "REMOVE" | "ADJUSTMENT" | "SALE" | "INITIAL"
+  quantity  Int      // Positive for add, negative for remove
+  notes     String?
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// =====================
+// SETTINGS MODEL
+// =====================
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
