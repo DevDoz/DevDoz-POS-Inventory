@@ -128,7 +128,7 @@ const ProductModal: React.FC<{
                   {imagePreview ? (
                     <>
                       <img
-                        src={`file://${imagePreview}`}
+                        src={`local-file://${imagePreview}`}
                         alt="Product"
                         className="w-full h-full object-cover"
                         onError={() => setImagePreview('')}
@@ -357,7 +357,7 @@ const ProductsPage: React.FC = () => {
           <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-border">
             {row.original.image ? (
               <img
-                src={`file://${row.original.image}`}
+                src={`local-file://${row.original.image}`}
                 alt={row.original.productName}
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}

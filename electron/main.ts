@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog, protocol, net } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { setupDatabase } from './services/database'
@@ -116,6 +116,13 @@ async function initialize(): Promise<void> {
 app.whenReady().then(async () => {
   // Set app user model id for Windows taskbar
   electronApp.setAppUserModelId('com.devdoz.pos')
+
+  // Register local-file:// protocol to serve local images without URL-encoding issues
+  // This avoids the "Application Support" space problem with file:// URLs
+  protocol.handle('local-file', (request) => {
+    const filePath = request.url.replace('local-file://', '')
+    return net.fetch(`file://${encodeURI(filePath)}`)
+  })
 
   // Optimize app for development
   app.on('browser-window-created', (_, window) => {

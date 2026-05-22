@@ -197,7 +197,7 @@ const POSPage: React.FC = () => {
                   <div className="w-full h-20 rounded-lg mb-2 overflow-hidden bg-gray-100 flex items-center justify-center">
                     {product.image ? (
                       <img
-                        src={`file://${product.image}`}
+                        src={`local-file://${product.image}`}
                         alt={product.productName}
                         className="w-full h-full object-cover"
                         onError={(e) => { (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-2xl font-bold text-gray-300">${product.productName.charAt(0)}</span>` }}

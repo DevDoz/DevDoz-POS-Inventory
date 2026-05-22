@@ -305,7 +305,10 @@ export function registerProductHandlers(ipcMain: IpcMain): void {
   // ==================== PICK PRODUCT IMAGE ====================
   ipcMain.handle('products:pickImage', async () => {
     try {
-      const result = await dialog.showOpenDialog({
+      // Import mainWindow lazily to avoid circular dependency
+      const { mainWindow } = await import('../main')
+
+      const result = await dialog.showOpenDialog(mainWindow!, {
         title: 'Select Product Image',
         filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }],
         properties: ['openFile']
@@ -316,7 +319,7 @@ export function registerProductHandlers(ipcMain: IpcMain): void {
       }
 
       const srcPath = result.filePaths[0]
-      const ext = srcPath.split('.').pop() || 'jpg'
+      const ext = srcPath.split('.').pop()?.toLowerCase() || 'jpg'
       const filename = `product-${Date.now()}.${ext}`
       const imagesDir = join(app.getPath('userData'), 'product-images')
 
@@ -327,7 +330,8 @@ export function registerProductHandlers(ipcMain: IpcMain): void {
       const destPath = join(imagesDir, filename)
       fs.copyFileSync(srcPath, destPath)
 
-      return { success: true, data: { path: destPath, filename } }
+      // Return path using forward slashes (cross-platform safe)
+      return { success: true, data: { path: destPath.replace(/\\/g, '/'), filename } }
     } catch (error) {
       console.error('[IPC:products:pickImage] Error:', error)
       return { success: false, error: 'Failed to pick image' }
