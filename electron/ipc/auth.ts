@@ -55,7 +55,7 @@ export function registerAuthHandlers(ipcMain: IpcMain, sessionStore: Store): voi
 
       return {
         success: true,
-        user: {
+        data: {
           id: user.id,
           username: user.username,
           email: user.email,
@@ -95,7 +95,7 @@ export function registerAuthHandlers(ipcMain: IpcMain, sessionStore: Store): voi
         if (user) {
           return {
             success: true,
-            session: {
+            data: {
               userId: user.id,
               username: user.username,
               email: user.email,
@@ -105,10 +105,10 @@ export function registerAuthHandlers(ipcMain: IpcMain, sessionStore: Store): voi
           }
         }
       }
-      return { success: true, session: null }
+      return { success: true, data: null }
     } catch (error) {
       console.error('[IPC:auth:getSession] Error:', error)
-      return { success: true, session: null }
+      return { success: true, data: null }
     }
   })
 
