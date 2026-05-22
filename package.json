@@ -2,15 +2,15 @@
   "name": "devdoz-pos",
   "version": "1.0.0",
   "description": "DevDoz POS — Inventory & Point of Sale Desktop Application",
-  "main": "out/main/index.js",
+  "main": "out/main/main.js",
   "author": "DevDoz",
   "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "build:win": "npm run build && electron-builder --win",
-    "build:mac": "npm run build && electron-builder --mac",
+    "build:win": "electron-vite build && electron-builder --win",
+    "build:mac": "electron-vite build && electron-builder --mac",
     "preview": "electron-vite preview",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -28,6 +28,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@electron-toolkit/utils": "^3.0.0",
     "@hookform/resolvers": "^3.3.2",
     "@tanstack/react-table": "^8.10.7",
     "@types/bcryptjs": "^2.4.6",
