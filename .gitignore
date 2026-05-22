@@ -8,3 +8,5 @@ backups/
 database/
 prisma/migrations/
 generated/
+.DS_Store
+**/.DS_Store
