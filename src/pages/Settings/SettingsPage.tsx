@@ -250,11 +250,18 @@ const SettingsPage: React.FC = () => {
       {activeTab === 'about' && (
         <div className="max-w-lg">
           <div className="card text-center space-y-4">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto">
-              <Info className="w-8 h-8 text-white" />
+            <div className="flex justify-center">
+              <img
+                src="/logo.png"
+                alt="DevDoz POS"
+                className="w-20 h-20 rounded-2xl object-cover shadow-lg mx-auto"
+                style={{ boxShadow: '0 8px 32px rgba(39,170,225,0.25)' }}
+              />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">DevDoz POS</h2>
+              <h2 className="text-xl font-bold text-text-primary">
+                DevDoz <span style={{ color: '#27AAE1' }}>POS</span>
+              </h2>
               <p className="text-text-muted text-sm">Version {appVersion || '1.0.0'}</p>
             </div>
             <p className="text-text-secondary text-sm">
@@ -262,7 +269,7 @@ const SettingsPage: React.FC = () => {
             </p>
             <div className="pt-4 border-t border-border text-xs text-text-muted space-y-1">
               <div>Built with Electron · React · TypeScript · SQLite</div>
-              <div>© 2024 DevDoz. All rights reserved.</div>
+              <div>© 2025 DevDoz. All rights reserved.</div>
             </div>
           </div>
         </div>

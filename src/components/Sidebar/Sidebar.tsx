@@ -10,7 +10,6 @@ import {
   Receipt,
   UserCog,
   Settings,
-  ShoppingBag,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -62,13 +61,17 @@ const Sidebar: React.FC = () => {
       `}
     >
       {/* Header / Logo */}
-      <div className={`flex items-center px-4 py-5 border-b border-white/10 ${collapsed ? 'justify-center' : 'gap-3'}`}>
-        <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-          <ShoppingBag className="w-5 h-5 text-white" />
-        </div>
+      <div className={`flex items-center px-4 py-4 border-b border-white/10 ${collapsed ? 'justify-center' : 'gap-3'}`}>
+        <img
+          src="/logo.png"
+          alt="DevDoz POS"
+          className="w-9 h-9 rounded-xl object-cover flex-shrink-0 shadow-md"
+        />
         {!collapsed && (
           <div className="overflow-hidden">
-            <div className="text-white font-bold text-base leading-tight">DevDoz POS</div>
+            <div className="text-white font-bold text-base leading-tight tracking-wide">
+              DevDoz <span style={{ color: '#27AAE1' }}>POS</span>
+            </div>
             <div className="text-gray-400 text-xs">v1.0.0</div>
           </div>
         )}
