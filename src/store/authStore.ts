@@ -26,6 +26,11 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (username: string, password: string): Promise<boolean> => {
         set({ isLoading: true, error: null })
+        // Guard: window.api is exposed by the Electron preload script
+        if (typeof window === 'undefined' || !(window as any).api) {
+          set({ error: 'App IPC bridge not available. Please restart the application.', isLoading: false })
+          return false
+        }
         try {
           const response = await authApi.login(username, password)
           if (response.success && response.data) {
@@ -39,11 +44,11 @@ export const useAuthStore = create<AuthState>()(
             set({ user: session, isLoggedIn: true, isLoading: false })
             return true
           } else {
-            set({ error: response.error || 'Login failed', isLoading: false })
+            set({ error: response.error || 'Invalid username or password', isLoading: false })
             return false
           }
         } catch (err) {
-          set({ error: 'Connection error. Please try again.', isLoading: false })
+          set({ error: 'Login failed. Please try again.', isLoading: false })
           return false
         }
       },
