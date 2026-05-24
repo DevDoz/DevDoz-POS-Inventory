@@ -364,7 +364,7 @@ export function registerProductHandlers(ipcMain: IpcMain): void {
 
       await (prisma as any).$executeRaw`
         INSERT INTO "Category" (name, description, color, createdAt)
-        VALUES (${data.name}, ${data.description || null}, ${data.color || '#27AAE1'}, datetime('now'))
+        VALUES (${data.name}, ${data.description || null}, ${data.color || '#BEF949'}, datetime('now'))
       `
       const created = await (prisma as any).$queryRaw`
         SELECT id, name, description, color, createdAt FROM "Category" WHERE name = ${data.name} LIMIT 1
@@ -381,7 +381,7 @@ export function registerProductHandlers(ipcMain: IpcMain): void {
     try {
       if (data.name) {
         await (prisma as any).$executeRaw`
-          UPDATE "Category" SET name = ${data.name}, description = ${data.description || null}, color = ${data.color || '#27AAE1'}
+          UPDATE "Category" SET name = ${data.name}, description = ${data.description || null}, color = ${data.color || '#BEF949'}
           WHERE id = ${id}
         `
       }

@@ -255,12 +255,12 @@ const SettingsPage: React.FC = () => {
                 src="/logo.png"
                 alt="DevDoz POS"
                 className="w-20 h-20 rounded-2xl object-cover shadow-lg mx-auto"
-                style={{ boxShadow: '0 8px 32px rgba(39,170,225,0.25)' }}
+                style={{ boxShadow: '0 8px 32px rgba(190,249,73,0.25)' }}
               />
             </div>
             <div>
               <h2 className="text-xl font-bold text-text-primary">
-                DevDoz <span style={{ color: '#27AAE1' }}>POS</span>
+                DevDoz <span style={{ color: '#BEF949' }}>POS</span>
               </h2>
               <p className="text-text-muted text-sm">Version {appVersion || '1.0.0'}</p>
             </div>

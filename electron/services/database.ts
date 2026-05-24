@@ -188,7 +188,7 @@ async function runMigrations(prisma: PrismaClient): Promise<void> {
       "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
       "name" TEXT NOT NULL UNIQUE,
       "description" TEXT,
-      "color" TEXT DEFAULT '#27AAE1',
+      "color" TEXT DEFAULT '#BEF949',
       "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `)

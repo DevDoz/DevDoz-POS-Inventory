@@ -70,7 +70,7 @@ const Sidebar: React.FC = () => {
         {!collapsed && (
           <div className="overflow-hidden">
             <div className="text-white font-bold text-base leading-tight tracking-wide">
-              DevDoz <span style={{ color: '#27AAE1' }}>POS</span>
+              DevDoz <span style={{ color: '#BEF949' }}>POS</span>
             </div>
             <div className="text-gray-400 text-xs">v1.0.0</div>
           </div>

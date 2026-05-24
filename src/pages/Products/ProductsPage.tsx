@@ -432,7 +432,7 @@ const ProductsPage: React.FC = () => {
         return catName ? (
           <span
             className="px-2.5 py-0.5 rounded-full text-white text-xs font-semibold"
-            style={{ backgroundColor: cat?.color || '#27AAE1' }}
+            style={{ backgroundColor: cat?.color || '#BEF949' }}
           >
             {catName}
           </span>

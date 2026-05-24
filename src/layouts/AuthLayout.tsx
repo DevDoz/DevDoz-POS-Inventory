@@ -17,14 +17,14 @@ const AuthLayout: React.FC = () => {
                 src="/logo.png"
                 alt="DevDoz POS"
                 className="w-24 h-24 rounded-3xl object-cover shadow-2xl"
-                style={{ boxShadow: '0 0 60px rgba(39,170,225,0.4)' }}
+                style={{ boxShadow: '0 0 60px rgba(190,249,73,0.4)' }}
               />
               {/* Glow ring */}
               <div
                 className="absolute inset-0 rounded-3xl"
                 style={{
                   background: 'transparent',
-                  boxShadow: '0 0 0 1px rgba(39,170,225,0.3)',
+                  boxShadow: '0 0 0 1px rgba(190,249,73,0.3)',
                   borderRadius: '1.5rem'
                 }}
               />
@@ -32,7 +32,7 @@ const AuthLayout: React.FC = () => {
           </div>
 
           <h1 className="text-4xl font-bold mb-1 tracking-tight">
-            DevDoz <span style={{ color: '#27AAE1' }}>POS</span>
+            DevDoz <span style={{ color: '#BEF949' }}>POS</span>
           </h1>
           <p className="text-gray-400 text-sm mb-2 font-medium tracking-widest uppercase">
             Inventory & Point of Sale

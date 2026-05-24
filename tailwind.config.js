@@ -8,14 +8,14 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#27AAE1',
-          hover: '#1E95C6',
-          light: '#EBF7FD',
-          dark: '#1577A0'
+          DEFAULT: '#BEF949',
+          hover: '#a8e030',
+          light: '#f2fdd0',
+          dark: '#7db81e'
         },
         sidebar: '#1F2937',
         'sidebar-hover': '#374151',
-        'sidebar-active': '#27AAE1',
+        'sidebar-active': '#BEF949',
         background: '#F7F9FC',
         surface: '#FFFFFF',
         border: '#E5E7EB',

@@ -10,7 +10,7 @@ import { useSettingsStore } from '@/store/settingsStore'
 import type { ProductReport, RevenueReport, MonthlyReport } from '@/types'
 import dayjs from 'dayjs'
 
-const CHART_COLORS = ['#27AAE1', '#16A34A', '#F59E0B', '#DC2626', '#8B5CF6', '#06B6D4']
+const CHART_COLORS = ['#BEF949', '#16A34A', '#F59E0B', '#DC2626', '#8B5CF6', '#06B6D4']
 
 const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'daily' | 'monthly' | 'products' | 'revenue'>('daily')
@@ -198,7 +198,7 @@ const ReportsPage: React.FC = () => {
                         <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#9CA3AF" />
                         <YAxis tick={{ fontSize: 11 }} stroke="#9CA3AF" />
                         <Tooltip formatter={(v: number) => [formatCurrency(v, currencySymbol), 'Revenue']} contentStyle={{ borderRadius: '8px', fontSize: '12px' }} />
-                        <Bar dataKey="revenue" fill="#27AAE1" radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="revenue" fill="#BEF949" radius={[3, 3, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>

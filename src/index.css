@@ -72,8 +72,8 @@ body {
   }
 
   .btn-primary {
-    @apply btn bg-primary text-white hover:bg-primary-hover focus:ring-primary
-           active:scale-[0.98];
+    @apply btn bg-primary text-gray-900 hover:bg-primary-hover focus:ring-primary
+           active:scale-[0.98] font-semibold;
   }
 
   .btn-secondary {
@@ -169,7 +169,7 @@ body {
   }
 
   .data-table tbody tr {
-    @apply hover:bg-blue-50/50 transition-colors duration-100;
+    @apply hover:bg-primary/5 transition-colors duration-100;
   }
 
   /* --- Sidebar --- */
@@ -214,14 +214,14 @@ body {
 
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(135deg, #27AAE1, #1E95C6);
+    background: linear-gradient(135deg, #BEF949, #7db81e);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-gradient-primary {
-    background: linear-gradient(135deg, #27AAE1 0%, #1577A0 100%);
+    background: linear-gradient(135deg, #BEF949 0%, #a8e030 100%);
   }
 
   .no-select {

@@ -20,7 +20,7 @@ interface Category {
 
 // Preset color swatches
 const COLOR_SWATCHES = [
-  '#27AAE1', '#16A34A', '#F59E0B', '#DC2626',
+  '#BEF949', '#16A34A', '#F59E0B', '#DC2626',
   '#8B5CF6', '#06B6D4', '#EC4899', '#F97316',
   '#64748B', '#0EA5E9', '#10B981', '#6366F1'
 ]
@@ -28,7 +28,7 @@ const COLOR_SWATCHES = [
 const categorySchema = z.object({
   name: z.string().min(1, 'Name is required').max(50, 'Max 50 characters'),
   description: z.string().max(200).optional(),
-  color: z.string().default('#27AAE1')
+  color: z.string().default('#BEF949')
 })
 type CategoryFormData = z.infer<typeof categorySchema>
 
@@ -43,13 +43,13 @@ const CategoryModal: React.FC<{
 }> = ({ category, onClose, onSave }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [selectedColor, setSelectedColor] = useState(category?.color || '#27AAE1')
+  const [selectedColor, setSelectedColor] = useState(category?.color || '#BEF949')
 
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: category
       ? { name: category.name, description: category.description || '', color: category.color }
-      : { color: '#27AAE1' }
+      : { color: '#BEF949' }
   })
 
   const onSubmit = async (data: CategoryFormData) => {

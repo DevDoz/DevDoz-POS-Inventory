@@ -190,9 +190,9 @@ const DashboardPage: React.FC = () => {
               <Line
                 type="monotone"
                 dataKey="totalRevenue"
-                stroke="#27AAE1"
+                stroke="#BEF949"
                 strokeWidth={2.5}
-                dot={{ r: 4, fill: '#27AAE1' }}
+                dot={{ r: 4, fill: '#BEF949' }}
                 activeDot={{ r: 6 }}
               />
             </LineChart>
@@ -214,7 +214,7 @@ const DashboardPage: React.FC = () => {
                 ]}
                 contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB', fontSize: '12px' }}
               />
-              <Bar dataKey="totalRevenue" fill="#27AAE1" radius={[4, 4, 0, 0]} name="Revenue" />
+              <Bar dataKey="totalRevenue" fill="#BEF949" radius={[4, 4, 0, 0]} name="Revenue" />
             </BarChart>
           </ResponsiveContainer>
         </div>
