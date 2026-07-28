@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Save, HardDrive, RotateCcw, Plus, Info } from 'lucide-react'
+import { Save, HardDrive, RotateCcw, Plus, Info, Check, Palette } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { settingsApi } from '@/services/api'
 import { useSettingsStore } from '@/store/settingsStore'
 import { formatFileSize, formatDateTime } from '@/utils/formatters'
+import { PRIMARY_COLOR_PRESETS, applyPrimaryColor } from '@/constants/theme'
 
 interface SettingsForm {
   store_name: string
@@ -14,10 +15,11 @@ interface SettingsForm {
   tax_rate: string
   receipt_footer: string
   low_stock_default: string
+  primary_color: string
 }
 
 const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'store' | 'pos' | 'backup' | 'about'>('store')
+  const [activeTab, setActiveTab] = useState<'store' | 'appearance' | 'pos' | 'backup' | 'about'>('store')
   const [backups, setBackups] = useState<Array<{ filename: string; size: number; createdAt: string }>>([])
   const [isCreatingBackup, setIsCreatingBackup] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
@@ -26,7 +28,8 @@ const SettingsPage: React.FC = () => {
   const [appVersion, setAppVersion] = useState('')
   const { loadSettings, getSetting } = useSettingsStore()
 
-  const { register, handleSubmit, reset } = useForm<SettingsForm>()
+  const { register, handleSubmit, reset, watch, setValue } = useForm<SettingsForm>()
+  const selectedPrimaryColor = watch('primary_color') || 'emerald'
 
   useEffect(() => {
     loadCurrentSettings()
@@ -41,6 +44,9 @@ const SettingsPage: React.FC = () => {
     if (res.success && res.data) {
       reset(res.data as any)
       await loadSettings()
+      if (res.data.primary_color) {
+        applyPrimaryColor(res.data.primary_color)
+      }
     }
   }
 
@@ -56,6 +62,9 @@ const SettingsPage: React.FC = () => {
     const res = await settingsApi.setMultiple(strData)
     if (res.success) {
       await loadSettings()
+      if (data.primary_color) {
+        applyPrimaryColor(data.primary_color)
+      }
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
     }
@@ -88,6 +97,7 @@ const SettingsPage: React.FC = () => {
 
   const tabs = [
     { key: 'store', label: 'Store Info' },
+    { key: 'appearance', label: 'Appearance & Theme' },
     { key: 'pos', label: 'POS Settings' },
     { key: 'backup', label: 'Backup & Restore' },
     { key: 'about', label: 'About' }
@@ -108,7 +118,7 @@ const SettingsPage: React.FC = () => {
             onClick={() => setActiveTab(tab.key)}
             className={`px-5 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeTab === tab.key
-                ? 'border-primary text-primary'
+                ? 'border-primary text-primary font-semibold'
                 : 'border-transparent text-text-secondary hover:text-text-primary'
             }`}
           >
@@ -147,6 +157,71 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
 
+        {/* APPEARANCE & THEME */}
+        {activeTab === 'appearance' && (
+          <div className="card max-w-2xl space-y-6">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Palette className="w-5 h-5 text-primary" />
+                <h2 className="font-semibold text-text-primary text-base">Primary Theme Color</h2>
+              </div>
+              <p className="text-sm text-text-secondary">
+                Select a dark, high-contrast primary color for high visibility on light backgrounds.
+              </p>
+            </div>
+
+            {/* Presets Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {PRIMARY_COLOR_PRESETS.map((preset) => {
+                const isSelected = selectedPrimaryColor === preset.id || selectedPrimaryColor === preset.hex
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      setValue('primary_color', preset.id)
+                      applyPrimaryColor(preset.id)
+                    }}
+                    className={`p-4 rounded-xl border-2 text-left transition-all relative flex flex-col justify-between h-28 cursor-pointer ${
+                      isSelected
+                        ? 'border-primary shadow-md bg-gray-50/50 ring-2 ring-primary/20'
+                        : 'border-border hover:border-gray-300 hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className="w-6 h-6 rounded-full inline-block shadow-inner border border-black/10"
+                          style={{ backgroundColor: preset.hex }}
+                        />
+                        <span className="font-semibold text-sm text-text-primary">{preset.name}</span>
+                      </div>
+                      {isSelected && (
+                        <div className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Preview elements */}
+                    <div className="flex items-center gap-2 mt-3">
+                      <span
+                        className="px-3 py-1 rounded-md text-xs font-semibold text-white shadow-xs"
+                        style={{ backgroundColor: preset.hex }}
+                      >
+                        Button
+                      </span>
+                      <span className="text-xs font-bold" style={{ color: preset.hex }}>
+                        Active Text
+                      </span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* POS SETTINGS */}
         {activeTab === 'pos' && (
           <div className="card max-w-2xl space-y-4">
@@ -169,8 +244,8 @@ const SettingsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Inline save for store/pos tabs */}
-        {(activeTab === 'store' || activeTab === 'pos') && (
+        {/* Inline save for store/appearance/pos tabs */}
+        {(activeTab === 'store' || activeTab === 'appearance' || activeTab === 'pos') && (
           <div className="flex items-center gap-3 mt-4">
             <button type="submit" id="save-settings" className="btn btn-primary" disabled={isSaving}>
               <Save className="w-4 h-4" />
@@ -255,12 +330,12 @@ const SettingsPage: React.FC = () => {
                 src="/logo.png"
                 alt="DevDoz POS"
                 className="w-20 h-20 rounded-2xl object-cover shadow-lg mx-auto"
-                style={{ boxShadow: '0 8px 32px rgba(190,249,73,0.25)' }}
+                style={{ boxShadow: '0 8px 32px var(--primary-hex)' }}
               />
             </div>
             <div>
               <h2 className="text-xl font-bold text-text-primary">
-                DevDoz <span style={{ color: '#BEF949' }}>POS</span>
+                DevDoz <span className="text-primary">POS</span>
               </h2>
               <p className="text-text-muted text-sm">Version {appVersion || '1.0.0'}</p>
             </div>

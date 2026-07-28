@@ -6,6 +6,14 @@
    GLOBAL BASE STYLES
    ============================================ */
 
+:root {
+  --primary-rgb: 22 163 74;
+  --primary-hover-rgb: 21 128 61;
+  --primary-light-rgb: 220 252 231;
+  --primary-dark-rgb: 22 101 52;
+  --primary-hex: #16A34A;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -72,7 +80,7 @@ body {
   }
 
   .btn-primary {
-    @apply btn bg-primary text-gray-900 hover:bg-primary-hover focus:ring-primary
+    @apply btn bg-primary text-white hover:bg-primary-hover focus:ring-primary
            active:scale-[0.98] font-semibold;
   }
 

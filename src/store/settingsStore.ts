@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { AppSettings } from '@/types'
 import { settingsApi } from '@/services/api'
+import { applyPrimaryColor } from '@/constants/theme'
 
 interface SettingsState {
   settings: AppSettings | null
@@ -22,7 +23,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   tax_rate: '10',
   receipt_footer: 'Thank You for Shopping With Us!',
   low_stock_default: '10',
-  backup_enabled: 'true'
+  backup_enabled: 'true',
+  primary_color: 'emerald'
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -35,11 +37,16 @@ export const useSettingsStore = create<SettingsState>()(
         try {
           const response = await settingsApi.getAll()
           if (response.success && response.data) {
-            set({ settings: response.data as AppSettings, isLoaded: true })
+            const merged = { ...DEFAULT_SETTINGS, ...response.data } as AppSettings
+            set({ settings: merged, isLoaded: true })
+            applyPrimaryColor(merged.primary_color)
+          } else {
+            applyPrimaryColor(DEFAULT_SETTINGS.primary_color)
           }
         } catch (err) {
           console.error('[SettingsStore] Failed to load settings:', err)
           set({ isLoaded: true })
+          applyPrimaryColor(DEFAULT_SETTINGS.primary_color)
         }
       },
 
@@ -52,9 +59,13 @@ export const useSettingsStore = create<SettingsState>()(
 
           const response = await settingsApi.setMultiple(stringData)
           if (response.success) {
-            set((state) => ({
-              settings: { ...state.settings!, ...data }
-            }))
+            set((state) => {
+              const updated = { ...state.settings!, ...data }
+              if (data.primary_color) {
+                applyPrimaryColor(data.primary_color)
+              }
+              return { settings: updated }
+            })
             return true
           }
           return false

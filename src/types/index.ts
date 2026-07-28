@@ -161,6 +161,7 @@ export interface AppSettings {
   receipt_footer: string
   low_stock_default: string
   backup_enabled: string
+  primary_color?: string
 }
 
 // =====================

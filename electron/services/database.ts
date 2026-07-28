@@ -235,7 +235,8 @@ async function seedDefaultData(prisma: PrismaClient): Promise<void> {
     { key: 'tax_rate', value: '10' },
     { key: 'receipt_footer', value: 'Thank You for Shopping With Us!' },
     { key: 'low_stock_default', value: '10' },
-    { key: 'backup_enabled', value: 'true' }
+    { key: 'backup_enabled', value: 'true' },
+    { key: 'primary_color', value: 'emerald' }
   ]
 
   for (const setting of defaultSettings) {

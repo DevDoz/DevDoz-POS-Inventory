@@ -8,14 +8,14 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#BEF949',
-          hover: '#a8e030',
-          light: '#f2fdd0',
-          dark: '#7db81e'
+          DEFAULT: 'rgb(var(--primary-rgb) / <alpha-value>)',
+          hover: 'rgb(var(--primary-hover-rgb) / <alpha-value>)',
+          light: 'rgb(var(--primary-light-rgb) / <alpha-value>)',
+          dark: 'rgb(var(--primary-dark-rgb) / <alpha-value>)'
         },
         sidebar: '#1F2937',
         'sidebar-hover': '#374151',
-        'sidebar-active': '#BEF949',
+        'sidebar-active': 'rgb(var(--primary-rgb) / <alpha-value>)',
         background: '#F7F9FC',
         surface: '#FFFFFF',
         border: '#E5E7EB',
