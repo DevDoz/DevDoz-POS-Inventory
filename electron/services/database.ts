@@ -201,9 +201,9 @@ async function runMigrations(prisma: PrismaClient): Promise<void> {
 // ============================================================
 
 async function seedDefaultData(prisma: PrismaClient): Promise<void> {
-  // Check if admin user already exists
+  // Check if admin user already exists by username 'admin'
   const adminExists = await prisma.user.findFirst({
-    where: { role: 'ADMIN' }
+    where: { username: 'admin' }
   })
 
   if (!adminExists) {
